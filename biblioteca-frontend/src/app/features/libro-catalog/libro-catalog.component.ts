@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-// PrimeNG
+// PrimeNG Imports
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,8 +12,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
+import { TabViewModule } from 'primeng/tabview';
 
-// Services
+// Services & Models
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { LibroService } from 'src/app/services/libro.service';
 import { Libro } from 'src/app/models/libro.model';
@@ -22,23 +24,15 @@ import { Libro } from 'src/app/models/libro.model';
   selector: 'app-libro-catalog',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    TableModule,
-    ButtonModule,
-    InputTextModule,
-    DialogModule,
-    ToastModule,
-    ConfirmDialogModule,
-    TagModule,
-    SkeletonModule,
-    CheckboxModule,
+    CommonModule, FormsModule, TableModule, ButtonModule, InputTextModule,
+    DialogModule, ToastModule, ConfirmDialogModule, TagModule, SkeletonModule,
+    CheckboxModule, TooltipModule, TabViewModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './libro-catalog.component.html',
   styleUrl: './libro-catalog.component.scss',
 })
-export class LibroCatalogComponent {
+export class LibroCatalogComponent implements OnInit {
   private libroService = inject(LibroService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -46,11 +40,13 @@ export class LibroCatalogComponent {
   libros: Libro[] = [];
   isLoading: boolean = true;
   searchTerm: string = '';
+  activeTabIndex: number = 0; // 0: Todos, 1: Disponibles, 2: Prestados
 
+  // Modal Control
   libroDialog: boolean = false;
   isEditing: boolean = false;
-  libroActual: Libro = this.getEmptyBook();
   isSubmitted: boolean = false;
+  libroActual: Libro = this.getEmptyBook();
 
   ngOnInit() {
     this.loadBooks();
@@ -58,110 +54,70 @@ export class LibroCatalogComponent {
 
   loadBooks() {
     this.isLoading = true;
-    setTimeout(() => {
-      this.libroService.getAll(this.searchTerm).subscribe({
-        next: (data) => {
-          this.libros = data;
-          this.isLoading = false;
-        },
-        error: () => {
-          this.isLoading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error de conexión',
-          });
-        },
-      });
-    }, 500);
+    let status: 'todos' | 'disponibles' | 'prestados' = 'todos';
+
+    if (this.activeTabIndex === 1) status = 'disponibles';
+    if (this.activeTabIndex === 2) status = 'prestados';
+
+    this.libroService.getBooks(status, this.searchTerm).subscribe({
+      next: (data) => {
+        this.libros = data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la información' });
+      },
+    });
+  }
+
+  onTabChange(event: any) {
+    this.activeTabIndex = event.index;
+    this.loadBooks();
   }
 
   onSearch() {
     this.loadBooks();
   }
 
+  // --- CRUD ACTIONS ---
+
   openNew() {
     this.libroActual = this.getEmptyBook();
     this.isEditing = false;
-    this.libroDialog = true;
     this.isSubmitted = false;
+    this.libroDialog = true;
   }
 
   editBook(libro: Libro) {
     this.libroActual = { ...libro };
     this.isEditing = true;
+    this.isSubmitted = false;
     this.libroDialog = true;
   }
 
   saveBook() {
     this.isSubmitted = true;
-
-    // 1. Validaciones Frontend básicas
-    if (
-      !this.libroActual.titulo ||
-      !this.libroActual.isbn ||
-      !this.libroActual.autor
-    ) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Datos incompletos',
-        detail: 'Llena todos los campos obligatorios (*)',
-      });
+    if (!this.libroActual.titulo || !this.libroActual.isbn || !this.libroActual.autor) {
+      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Completa los campos obligatorios (*)' });
       return;
     }
 
-    if (
-      this.libroActual.anioPublicacion < 1000 ||
-      this.libroActual.anioPublicacion > 2025
-    ) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Año inválido',
-        detail: 'El año debe estar entre 1000 y 2025',
-      });
-      return;
-    }
-
-    // 2. Enviar al Backend
     const request = this.isEditing
       ? this.libroService.update(this.libroActual.id!, this.libroActual)
       : this.libroService.create(this.libroActual);
 
     request.subscribe({
       next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Libro guardado correctamente',
-        });
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Registro guardado correctamente' });
         this.libroDialog = false;
         this.loadBooks();
       },
       error: (err) => {
-        // MANEJO DE ERRORES DEL BACKEND
-        console.error(err);
-
         if (err.status === 409) {
-          // 409 Conflict (ISBN Duplicado)
-          this.messageService.add({
-            severity: 'error',
-            summary: 'ISBN Duplicado',
-            detail: 'Ya existe un libro registrado con ese ISBN.',
-          });
-        } else if (err.status === 400) {
-          // 400 Bad Request (Validaciones Java)
-          // Si el backend devuelve mapa de errores, podríamos mostrarlos
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Datos Inválidos',
-            detail: 'Revisa el formato del ISBN (debe comenzar con ISBN-)',
-          });
+          this.messageService.add({ severity: 'error', summary: 'Duplicado', detail: 'El ISBN ya existe en el sistema.' });
         } else {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error del Sistema',
-            detail: 'No se pudo guardar el libro.',
-          });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Verifica los datos ingresados.' });
         }
       },
     });
@@ -169,17 +125,14 @@ export class LibroCatalogComponent {
 
   deleteBook(libro: Libro) {
     this.confirmationService.confirm({
-      message: `¿Eliminar "${libro.titulo}"?`,
-      header: 'Confirmar',
+      message: `¿Estás seguro de eliminar "${libro.titulo}"?`,
+      header: 'Confirmar Eliminación',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger p-button-text',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
         this.libroService.delete(libro.id!).subscribe(() => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Eliminado',
-          });
+          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Libro eliminado del catálogo' });
           this.loadBooks();
         });
       },
@@ -187,32 +140,26 @@ export class LibroCatalogComponent {
   }
 
   toggleLoan(libro: Libro) {
-    // Si el backend tiene los endpoints de prestar/devolver
     const isReturning = !libro.disponible;
-    this.libroService.toggleLoan(libro.id!, isReturning).subscribe(() => {
-      this.messageService.add({
-        severity: 'info',
-        summary: isReturning ? 'Devuelto' : 'Prestado',
-      });
-      this.loadBooks();
+    this.libroService.toggleLoan(libro.id!, isReturning).subscribe({
+      next: () => {
+        const msg = isReturning ? 'Libro devuelto a estantería' : 'Libro prestado exitosamente';
+        this.messageService.add({ severity: 'info', summary: 'Operación Exitosa', detail: msg });
+        this.loadBooks();
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error de proceso' });
+      },
     });
   }
 
-  getAvailableCount() {
-    return this.libros.filter((b) => b.disponible).length;
-  }
-  getBorrowedCount() {
-    return this.libros.filter((b) => !b.disponible).length;
-  }
+  // --- HELPERS ---
+
+  // Nota: Estos contadores son visuales sobre la data cargada actualmente.
+  getAvailableCount() { return this.libros.filter((b) => b.disponible).length; }
+  getBorrowedCount() { return this.libros.filter((b) => !b.disponible).length; }
 
   private getEmptyBook(): Libro {
-    return {
-      titulo: '',
-      autor: '',
-      isbn: 'ISBN-',
-      genero: '',
-      anioPublicacion: 2024,
-      disponible: true,
-    };
+    return { titulo: '', autor: '', isbn: 'ISBN-', genero: '', anioPublicacion: 2025, disponible: true };
   }
 }

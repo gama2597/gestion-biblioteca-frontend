@@ -1,5 +1,5 @@
-/* Variables y Gradientes */
-$primary-grad: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+/* Variables y Paleta */
+$primary-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 $bg-color: #f8fafc;
 
 .app-container {
@@ -9,15 +9,15 @@ $bg-color: #f8fafc;
   font-family: 'Poppins', sans-serif;
 }
 
-/* 1. HERO HEADER */
+/* HERO SECTION */
 .hero-section {
   background: $primary-grad;
   height: 320px;
   padding-top: 3rem;
   display: flex;
   justify-content: center;
-  border-bottom-left-radius: 30px;
-  border-bottom-right-radius: 30px;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
 }
 
 .hero-content {
@@ -25,9 +25,22 @@ $bg-color: #f8fafc;
   max-width: 900px;
   text-align: center;
   padding: 0 1rem;
+
+  .hero-title {
+    color: white;
+    font-size: 2.5rem;
+    margin: 0;
+    font-weight: 800;
+  }
+
+  .hero-subtitle {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+    font-size: 1.1rem;
+  }
 }
 
-/* BUSCADOR ESTILO GOOGLE */
+/* BUSCADOR FLOTANTE */
 .search-box {
   background: white;
   border-radius: 50px;
@@ -35,23 +48,79 @@ $bg-color: #f8fafc;
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-top: 1.5rem;
-  transition: transform 0.2s;
+  margin-top: 2rem;
+  transition: transform 0.2s, box-shadow 0.2s;
 
   &:hover,
   &:focus-within {
-    transform: scale(1.02);
+    transform: scale(1.01);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
   }
 }
 
-/* 2. MAIN CONTENT (Overlap) */
+/* MAIN CONTENT */
 .main-content {
   max-width: 1100px;
-  margin: -80px auto 0 auto;
-  /* Magia del Overlap */
+  margin: -70px auto 0 auto;
+  /* Efecto Overlap */
   padding: 0 1.5rem;
   position: relative;
   z-index: 10;
+}
+
+/* TARJETAS KPI (ESTADÍSTICAS) */
+.stat-card {
+  background: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
+
+  .icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .count {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  /* Colores Específicos */
+  &.available {
+    .icon-circle {
+      background: #dcfce7;
+      color: #166534;
+    }
+  }
+
+  &.borrowed {
+    .icon-circle {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+  }
 }
 
 /* BOTÓN CREAR */
@@ -65,6 +134,33 @@ $bg-color: #f8fafc;
   }
 }
 
+/* PESTAÑAS (Estilo Navegación) */
+:host ::ng-deep {
+  .custom-tabs .p-tabview-nav {
+    background: transparent;
+    border: none;
+    padding: 0 1rem;
+
+    li .p-tabview-nav-link {
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #64748b;
+      font-weight: 600;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #6366f1;
+      }
+    }
+
+    li.p-highlight .p-tabview-nav-link {
+      color: #6366f1;
+      border-bottom-color: #6366f1;
+    }
+  }
+}
+
 /* ESTILOS DE TABLA */
 .isbn-badge {
   font-family: 'Courier New', monospace;
@@ -72,7 +168,7 @@ $bg-color: #f8fafc;
   color: #4338ca;
   padding: 4px 8px;
   border-radius: 6px;
-  font-weight: 700;
+  font-weight: bold;
   font-size: 0.85rem;
   border: 1px solid #c7d2fe;
 }
@@ -81,30 +177,31 @@ $bg-color: #f8fafc;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 1rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 
   &.status-success {
     background: #dcfce7;
-    color: #15803d;
+    color: #166534;
   }
 
   &.status-borrowed {
     background: #fee2e2;
-    color: #b91c1c;
+    color: #991b1b;
   }
 }
 
-/* ACCIONES */
+/* BOTONES DE ACCIÓN */
 .action-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
   border: none;
-  background: #f1f5f9;
+  background: #f8fafc;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
@@ -117,29 +214,48 @@ $bg-color: #f8fafc;
     color: #a16207;
   }
 
-  /* Prestar (Amarillo) */
   &.return:hover {
     background: #dcfce7;
     color: #15803d;
   }
 
-  /* Devolver (Verde) */
   &.edit:hover {
     background: #eff6ff;
     color: #3b82f6;
   }
 
-  /* Editar (Azul) */
   &.delete:hover {
     background: #fef2f2;
     color: #ef4444;
   }
-
-  /* Borrar (Rojo) */
 }
 
-/* INPUTS CUSTOM */
+/* INPUTS */
 .custom-input {
   border-radius: 8px;
   padding: 0.75rem;
 }
+
+/* RESPONSIVE */
+// @media screen and (max-width: 768px) {
+//   .hero-title {
+//     font-size: 1.8rem !important;
+//   }
+
+//   .actions-bar {
+//     flex-direction: column-reverse;
+//     align-items: stretch !important;
+
+//     .create-btn {
+//       width: 100%;
+//     }
+
+//     .flex.gap-3 {
+//       justify-content: space-between;
+//     }
+
+//     .stat-card {
+//       flex-grow: 1;
+//     }
+//   }
+// }
