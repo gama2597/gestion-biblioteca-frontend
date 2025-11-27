@@ -1,0 +1,194 @@
+<div class="app-container fadein animation-duration-500">
+  <p-toast position="bottom-right"></p-toast>
+  <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="text-white text-4xl font-bold m-0 mb-2">Sistema de Gestión de Biblioteca</h1>
+      <p class="text-white-alpha-80 text-lg m-0 mb-4">Gestión profesional de recursos</p>
+
+      <div class="search-box shadow-4">
+        <i class="pi pi-search text-500 text-xl"></i>
+        <input type="text" pInputText placeholder="Buscar libro, autor o género..." [(ngModel)]="searchTerm"
+          (input)="onSearch()" class="w-full border-none shadow-none text-lg">
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <div class="flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+      <div class="flex gap-3">
+        <div class="stat-card bg-white shadow-2 border-round-xl px-3 py-2 flex align-items-center gap-2">
+          <div
+            class="w-2rem h-2rem bg-green-100 border-circle flex align-items-center justify-content-center text-green-600">
+            <i class="pi pi-check"></i>
+          </div>
+          <div>
+            <span class="block font-bold text-900">{{ getAvailableCount() }}</span>
+            <span class="text-xs text-500">Disponibles</span>
+          </div>
+        </div>
+        <div class="stat-card bg-white shadow-2 border-round-xl px-3 py-2 flex align-items-center gap-2">
+          <div
+            class="w-2rem h-2rem bg-red-100 border-circle flex align-items-center justify-content-center text-red-600">
+            <i class="pi pi-clock"></i>
+          </div>
+          <div>
+            <span class="block font-bold text-900">{{ getBorrowedCount() }}</span>
+            <span class="text-xs text-500">Prestados</span>
+          </div>
+        </div>
+      </div>
+
+      <button pButton label="Nuevo Libro" icon="pi pi-plus" class="create-btn shadow-3 border-round-3xl px-4"
+        (click)="openNew()">
+      </button>
+    </div>
+
+    <div class="table-wrapper bg-white shadow-3 border-round-2xl p-2 overflow-hidden">
+      <p-table [value]="libros" [rows]="5" [paginator]="true" [rowsPerPageOptions]="[5, 10, 20]"
+        styleClass="p-datatable-striped" responsiveLayout="scroll">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 15%">ISBN</th>
+            <th style="width: 30%">INFORMACIÓN</th>
+            <th style="width: 20%">AUTOR</th>
+            <th style="width: 15%">ESTADO</th>
+            <th style="width: 20%; text-align: right">ACCIONES</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-libro>
+          <tr class="table-row">
+            <td><span class="isbn-badge">{{ libro.isbn }}</span></td>
+            <td>
+              <div class="flex flex-column">
+                <span class="font-bold text-900 text-lg">{{ libro.titulo }}</span>
+                <span class="text-sm text-500">{{ libro.genero }} • {{ libro.anioPublicacion }}</span>
+              </div>
+            </td>
+            <td class="font-medium text-700">{{ libro.autor }}</td>
+            <td>
+              <div class="status-badge" [ngClass]="libro.disponible ? 'status-success' : 'status-borrowed'">
+                <i class="pi" [ngClass]="libro.disponible ? 'pi-check-circle' : 'pi-times-circle'"></i>
+                <span>{{ libro.disponible ? 'Disponible' : 'Prestado' }}</span>
+              </div>
+            </td>
+            <td style="text-align: right">
+              <div class="flex justify-content-end gap-2">
+                <button class="action-btn" [ngClass]="libro.disponible ? 'loan' : 'return'" (click)="toggleLoan(libro)"
+                  [title]="libro.disponible ? 'Prestar' : 'Devolver'">
+                  <i class="pi" [ngClass]="libro.disponible ? 'pi-user-plus' : 'pi-refresh'"></i>
+                </button>
+
+                <button class="action-btn edit" (click)="editBook(libro)" title="Editar">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                <button class="action-btn delete" (click)="deleteBook(libro)" title="Eliminar">
+                  <i class="pi pi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr *ngIf="isLoading">
+            <td colspan="5">
+              <div class="flex flex-column gap-3 p-3">
+                <p-skeleton height="3rem" styleClass="mb-2"></p-skeleton>
+                <p-skeleton height="3rem" styleClass="mb-2"></p-skeleton>
+                <p-skeleton height="3rem"></p-skeleton>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading">
+            <td colspan="5" class="text-center p-6 text-500">
+              <i class="pi pi-search text-4xl mb-3 block"></i>
+              <span>No se encontraron resultados</span>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+  <p-dialog [(visible)]="libroDialog" [style]="{width: '500px'}" [header]="isEditing ? 'Editar Libro' : 'Nuevo Registro'"
+    [modal]="true" styleClass="p-fluid custom-dialog border-round-xl">
+
+    <ng-template pTemplate="content">
+      <div class="flex flex-column gap-4 mt-3">
+
+        <div class="field">
+          <label class="font-bold">Título *</label>
+          <input pInputText [(ngModel)]="libroActual.titulo" class="custom-input" maxlength="200" required
+            placeholder="Ingresa el título completo" />
+
+          <div class="flex justify-content-between mt-1">
+            <small class="p-error" *ngIf="!libroActual.titulo && isSubmitted">Requerido</small>
+            <small class="text-500 text-xs ml-auto">
+              {{ libroActual.titulo?.length || 0 }} / 200
+            </small>
+          </div>
+        </div>
+
+        <div class="formgrid grid">
+          <div class="field col">
+            <label class="font-bold">Autor *</label>
+            <input pInputText [(ngModel)]="libroActual.autor" class="custom-input" maxlength="100" required />
+
+            <div class="flex justify-content-end mt-1">
+              <small class="text-500 text-xs">
+                {{ libroActual.autor?.length || 0 }} / 100
+              </small>
+            </div>
+          </div>
+
+          <div class="field col">
+            <label class="font-bold">Año *</label>
+            <input pInputText type="number" [(ngModel)]="libroActual.anioPublicacion" class="custom-input" min="1000"
+              max="2025" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="font-bold">ISBN *</label>
+          <input pInputText [(ngModel)]="libroActual.isbn" class="custom-input" maxlength="30"
+            placeholder="ISBN-XXX..." />
+
+          <div class="flex justify-content-between mt-1">
+            <small class="text-500 text-xs">Formato único</small>
+            <small class="text-500 text-xs">
+              {{ libroActual.isbn?.length || 0 }} / 30
+            </small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="font-bold">Género *</label>
+          <input pInputText [(ngModel)]="libroActual.genero" class="custom-input" maxlength="50" />
+
+          <div class="flex justify-content-end mt-1">
+            <small class="text-500 text-xs">
+              {{ libroActual.genero?.length || 0 }} / 50
+            </small>
+          </div>
+        </div>
+
+        <div class="field-checkbox p-3 bg-gray-50 border-round flex align-items-center gap-2">
+          <p-checkbox [(ngModel)]="libroActual.disponible" [binary]="true" inputId="disp"></p-checkbox>
+          <label for="disp" class="font-medium cursor-pointer">Disponible para préstamo</label>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <div class="flex justify-content-end gap-2 mt-2">
+        <button pButton label="Cancelar" class="p-button-text text-500" (click)="libroDialog = false"></button>
+        <button pButton label="Guardar Registro" class="p-button-primary border-round-lg" (click)="saveBook()"></button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

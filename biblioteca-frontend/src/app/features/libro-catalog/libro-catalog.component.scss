@@ -1,0 +1,145 @@
+/* Variables y Gradientes */
+$primary-grad: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+$bg-color: #f8fafc;
+
+.app-container {
+  background-color: $bg-color;
+  min-height: 100vh;
+  padding-bottom: 3rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* 1. HERO HEADER */
+.hero-section {
+  background: $primary-grad;
+  height: 320px;
+  padding-top: 3rem;
+  display: flex;
+  justify-content: center;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 900px;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+/* BUSCADOR ESTILO GOOGLE */
+.search-box {
+  background: white;
+  border-radius: 50px;
+  padding: 0.8rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  transition: transform 0.2s;
+
+  &:hover,
+  &:focus-within {
+    transform: scale(1.02);
+  }
+}
+
+/* 2. MAIN CONTENT (Overlap) */
+.main-content {
+  max-width: 1100px;
+  margin: -80px auto 0 auto;
+  /* Magia del Overlap */
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* BOTÓN CREAR */
+.create-btn {
+  background: #0f172a !important;
+  border: none !important;
+  font-weight: 600 !important;
+
+  &:hover {
+    background: #334155 !important;
+  }
+}
+
+/* ESTILOS DE TABLA */
+.isbn-badge {
+  font-family: 'Courier New', monospace;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid #c7d2fe;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  &.status-success {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.status-borrowed {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+/* ACCIONES */
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.loan:hover {
+    background: #fef9c3;
+    color: #a16207;
+  }
+
+  /* Prestar (Amarillo) */
+  &.return:hover {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  /* Devolver (Verde) */
+  &.edit:hover {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  /* Editar (Azul) */
+  &.delete:hover {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+
+  /* Borrar (Rojo) */
+}
+
+/* INPUTS CUSTOM */
+.custom-input {
+  border-radius: 8px;
+  padding: 0.75rem;
+}
