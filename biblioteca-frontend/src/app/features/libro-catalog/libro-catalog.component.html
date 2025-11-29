@@ -112,21 +112,68 @@
     </p-table>
   </ng-template>
 
-  <p-dialog [(visible)]="libroDialog" [style]="{width: '500px'}" [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
+  <p-dialog [(visible)]="libroDialog" [style]="{width: '600px'}" [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
     [header]="isEditing ? 'Editar Libro' : 'Nuevo Registro'" [modal]="true"
     styleClass="p-fluid custom-dialog border-round-xl">
+
     <ng-template pTemplate="content">
-      <div class="formgrid grid">
-        <div class="field col-12 md:col-6"> <label class="font-bold">Autor *</label>
-          <input pInputText [(ngModel)]="libroActual.autor" class="custom-input" maxlength="100" required />
-          <div class="flex justify-content-end mt-1"><small class="text-500 text-xs">{{ libroActual.autor?.length || 0
-              }} / 100</small></div>
+      <div class="flex flex-column gap-4 mt-3">
+
+        <div class="field">
+          <label class="font-bold">Título del Libro *</label>
+          <input pInputText [(ngModel)]="libroActual.titulo" class="custom-input" maxlength="200" required
+            placeholder="Ej: Cien años de soledad" />
+          <div class="flex justify-content-between mt-1">
+            <small class="p-error" *ngIf="!libroActual.titulo && isSubmitted">El título es requerido</small>
+            <small class="text-500 text-xs ml-auto">{{ libroActual.titulo?.length || 0 }} / 200</small>
+          </div>
         </div>
-        <div class="field col-12 md:col-6">
-          <label class="font-bold">Año *</label>
-          <input pInputText type="number" [(ngModel)]="libroActual.anioPublicacion" class="custom-input" min="1000"
-            max="2025" />
+
+        <div class="formgrid grid">
+          <div class="field col-12 md:col-8">
+            <label class="font-bold">Autor *</label>
+            <input pInputText [(ngModel)]="libroActual.autor" class="custom-input" maxlength="100" required
+              placeholder="Ej: Gabriel García Márquez" />
+            <div class="flex justify-content-end mt-1"><small class="text-500 text-xs">{{ libroActual.autor?.length || 0
+                }} / 100</small></div>
+          </div>
+          <div class="field col-12 md:col-4">
+            <label class="font-bold">Año *</label>
+            <input pInputText type="number" [(ngModel)]="libroActual.anioPublicacion" class="custom-input" min="1000"
+              max="2025" />
+          </div>
         </div>
+
+        <div class="formgrid grid">
+          <div class="field col-12 md:col-6">
+            <label class="font-bold">ISBN *</label>
+            <input pInputText [(ngModel)]="libroActual.isbn" class="custom-input" maxlength="30"
+              placeholder="ISBN-XXX-X..." />
+            <div class="flex justify-content-end mt-1"><small class="text-500 text-xs">{{ libroActual.isbn?.length || 0
+                }} / 30</small></div>
+          </div>
+          <div class="field col-12 md:col-6">
+            <label class="font-bold">Género *</label>
+            <input pInputText [(ngModel)]="libroActual.genero" class="custom-input" maxlength="50"
+              placeholder="Ej: Novela" />
+            <div class="flex justify-content-end mt-1"><small class="text-500 text-xs">{{ libroActual.genero?.length ||
+                0 }} / 50</small></div>
+          </div>
+        </div>
+
+        <div class="field-checkbox p-3 surface-100 border-round flex align-items-center gap-2 cursor-pointer"
+          (click)="disp.click()">
+          <p-checkbox [(ngModel)]="libroActual.disponible" [binary]="true" inputId="disp" #disp></p-checkbox>
+          <label for="disp" class="font-medium cursor-pointer flex-1">Disponible para préstamo inmediato</label>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <div class="flex justify-content-end gap-2 mt-2">
+        <button pButton label="Cancelar" class="p-button-text text-500" (click)="libroDialog = false"></button>
+        <button pButton label="Guardar Registro" class="p-button-primary border-round-lg px-4"
+          (click)="saveBook()"></button>
       </div>
     </ng-template>
   </p-dialog>

@@ -19,14 +19,25 @@ import { TabViewModule } from 'primeng/tabview';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { LibroService } from 'src/app/services/libro.service';
 import { Libro } from 'src/app/models/libro.model';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-libro-catalog',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, ButtonModule, InputTextModule,
-    DialogModule, ToastModule, ConfirmDialogModule, TagModule, SkeletonModule,
-    CheckboxModule, TooltipModule, TabViewModule
+    CommonModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    DialogModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TagModule,
+    SkeletonModule,
+    CheckboxModule,
+    TooltipModule,
+    TabViewModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './libro-catalog.component.html',
@@ -54,21 +65,57 @@ export class LibroCatalogComponent implements OnInit {
 
   loadBooks() {
     this.isLoading = true;
-    let status: 'todos' | 'disponibles' | 'prestados' = 'todos';
 
-    if (this.activeTabIndex === 1) status = 'disponibles';
-    if (this.activeTabIndex === 2) status = 'prestados';
+    if (this.searchTerm) {
+      this.libroService.getAll(this.searchTerm).subscribe({
+        next: (data) => {
+          if (this.activeTabIndex === 0) {
+            // Todos
+            this.libros = data;
+          } else if (this.activeTabIndex === 1) {
+            // Disponibles
+            this.libros = data.filter((l) => l.disponible);
+          } else if (this.activeTabIndex === 2) {
+            // Prestados
+            this.libros = data.filter((l) => !l.disponible);
+          }
+          this.isLoading = false;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se encontraron resultados',
+          });
+        },
+      });
+    } else {
+      let request: Observable<Libro[]>;
 
-    this.libroService.getBooks(status, this.searchTerm).subscribe({
-      next: (data) => {
-        this.libros = data;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la información' });
-      },
-    });
+      if (this.activeTabIndex === 0) {
+        request = this.libroService.getAll();
+      } else if (this.activeTabIndex === 1) {
+        request = this.libroService.getByStatus('disponibles');
+      } else {
+        request = this.libroService.getByStatus('prestados');
+      }
+
+      request.subscribe({
+        next: (data) => {
+          this.libros = data;
+          this.isLoading = false;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo cargar la lista',
+          });
+        },
+      });
+    }
   }
 
   onTabChange(event: any) {
@@ -79,8 +126,6 @@ export class LibroCatalogComponent implements OnInit {
   onSearch() {
     this.loadBooks();
   }
-
-  // --- CRUD ACTIONS ---
 
   openNew() {
     this.libroActual = this.getEmptyBook();
@@ -98,8 +143,16 @@ export class LibroCatalogComponent implements OnInit {
 
   saveBook() {
     this.isSubmitted = true;
-    if (!this.libroActual.titulo || !this.libroActual.isbn || !this.libroActual.autor) {
-      this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Completa los campos obligatorios (*)' });
+    if (
+      !this.libroActual.titulo ||
+      !this.libroActual.isbn ||
+      !this.libroActual.autor
+    ) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Atención',
+        detail: 'Completa los campos obligatorios (*)',
+      });
       return;
     }
 
@@ -109,15 +162,27 @@ export class LibroCatalogComponent implements OnInit {
 
     request.subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Registro guardado correctamente' });
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Registro guardado correctamente',
+        });
         this.libroDialog = false;
         this.loadBooks();
       },
       error: (err) => {
         if (err.status === 409) {
-          this.messageService.add({ severity: 'error', summary: 'Duplicado', detail: 'El ISBN ya existe en el sistema.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Duplicado',
+            detail: 'El ISBN ya existe en el sistema.',
+          });
         } else {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Verifica los datos ingresados.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Verifica los datos ingresados.',
+          });
         }
       },
     });
@@ -132,7 +197,11 @@ export class LibroCatalogComponent implements OnInit {
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
         this.libroService.delete(libro.id!).subscribe(() => {
-          this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: 'Libro eliminado del catálogo' });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Eliminado',
+            detail: 'Libro eliminado del catálogo',
+          });
           this.loadBooks();
         });
       },
@@ -143,23 +212,41 @@ export class LibroCatalogComponent implements OnInit {
     const isReturning = !libro.disponible;
     this.libroService.toggleLoan(libro.id!, isReturning).subscribe({
       next: () => {
-        const msg = isReturning ? 'Libro devuelto a estantería' : 'Libro prestado exitosamente';
-        this.messageService.add({ severity: 'info', summary: 'Operación Exitosa', detail: msg });
+        const msg = isReturning
+          ? 'Libro devuelto a estantería'
+          : 'Libro prestado exitosamente';
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Operación Exitosa',
+          detail: msg,
+        });
         this.loadBooks();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error de proceso' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.error?.message || 'Error de proceso',
+        });
       },
     });
   }
 
-  // --- HELPERS ---
-
-  // Nota: Estos contadores son visuales sobre la data cargada actualmente.
-  getAvailableCount() { return this.libros.filter((b) => b.disponible).length; }
-  getBorrowedCount() { return this.libros.filter((b) => !b.disponible).length; }
+  getAvailableCount() {
+    return this.libros.filter((b) => b.disponible).length;
+  }
+  getBorrowedCount() {
+    return this.libros.filter((b) => !b.disponible).length;
+  }
 
   private getEmptyBook(): Libro {
-    return { titulo: '', autor: '', isbn: 'ISBN-', genero: '', anioPublicacion: 2025, disponible: true };
+    return {
+      titulo: '',
+      autor: '',
+      isbn: 'ISBN-',
+      genero: '',
+      anioPublicacion: 2025,
+      disponible: true,
+    };
   }
 }
