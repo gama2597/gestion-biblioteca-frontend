@@ -9,11 +9,15 @@ export class LibroService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
+  // 1. Obtener TODOS o Buscar (Endpoint General)
   getAll(term: string = ''): Observable<Libro[]> {
+    // Si hay término, el backend busca. Si no, trae todos.
     const url = term ? `${this.apiUrl}?busqueda=${term}` : this.apiUrl;
     return this.http.get<Libro[]>(url);
   }
-  
+
+  // 2. Obtener por Estado (Endpoints Específicos creados en Hexagonal)
+  // Llama a /api/libros/disponibles o /api/libros/prestados
   getByStatus(status: 'disponibles' | 'prestados'): Observable<Libro[]> {
     return this.http.get<Libro[]>(`${this.apiUrl}/${status}`);
   }

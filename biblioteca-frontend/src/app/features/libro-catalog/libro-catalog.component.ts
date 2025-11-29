@@ -69,27 +69,21 @@ export class LibroCatalogComponent implements OnInit {
     if (this.searchTerm) {
       this.libroService.getAll(this.searchTerm).subscribe({
         next: (data) => {
-          if (this.activeTabIndex === 0) {
-            // Todos
-            this.libros = data;
-          } else if (this.activeTabIndex === 1) {
-            // Disponibles
-            this.libros = data.filter((l) => l.disponible);
-          } else if (this.activeTabIndex === 2) {
-            // Prestados
-            this.libros = data.filter((l) => !l.disponible);
+          if (this.activeTabIndex === 0) { // Todos
+             this.libros = data;
+          } else if (this.activeTabIndex === 1) { // Disponibles
+             this.libros = data.filter(l => l.disponible);
+          } else if (this.activeTabIndex === 2) { // Prestados
+             this.libros = data.filter(l => !l.disponible);
           }
           this.isLoading = false;
         },
         error: () => {
           this.isLoading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se encontraron resultados',
-          });
-        },
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se encontraron resultados' });
+        }
       });
+
     } else {
       let request: Observable<Libro[]>;
 
@@ -108,12 +102,8 @@ export class LibroCatalogComponent implements OnInit {
         },
         error: () => {
           this.isLoading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo cargar la lista',
-          });
-        },
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar la lista' });
+        }
       });
     }
   }
